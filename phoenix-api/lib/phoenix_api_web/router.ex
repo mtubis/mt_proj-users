@@ -7,6 +7,9 @@ defmodule PhoenixApiWeb.Router do
 
   scope "/api", PhoenixApiWeb do
     pipe_through :api
+
+    post "/import", ImportController, :run
+    resources "/users", UserController, except: [:new, :edit]
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

@@ -17,9 +17,83 @@ defmodule PhoenixApi.Accounts do
       [%User{}, ...]
 
   """
-  def list_users do
-    Repo.all(User)
+  def list_users(params \\ %{}) do
+    import Ecto.Query
+    alias PhoenixApi.Repo
+    alias PhoenixApi.Accounts.User
+
+    query =
+      from u in User,
+        where: true
+
+    query =
+      query
+      |> maybe_ilike(:first_name, Map.get(params, "first_name"))
+      |> maybe_ilike(:last_name, Map.get(params, "last_name"))
+      |> maybe_gender(Map.get(params, "gender"))
+      |> maybe_birthdate_range(Map.get(params, "birthdate_from"), Map.get(params, "birthdate_to"))
+      |> apply_sort(params)
+
+    Repo.all(query)
   end
+
+  defp maybe_ilike(query, _field, nil), do: query
+  defp maybe_ilike(query, _field, ""), do: query
+  defp maybe_ilike(query, field, value) do
+    import Ecto.Query
+    where(query, [u], ilike(field(u, ^field), ^"%#{value}%"))
+  end
+
+  defp maybe_gender(query, nil), do: query
+  defp maybe_gender(query, ""), do: query
+  defp maybe_gender(query, gender) when gender in ["male", "female"] do
+    import Ecto.Query
+    atom = String.to_atom(gender)   # tu jest bezpieczne, bo tylko 2 wartości
+    where(query, [u], u.gender == ^atom)
+  end
+  defp maybe_gender(query, _), do: query
+
+  defp maybe_birthdate_range(query, from_s, to_s) do
+    import Ecto.Query
+    from_date = parse_date(from_s)
+    to_date = parse_date(to_s)
+
+    cond do
+      from_date && to_date -> where(query, [u], u.birthdate >= ^from_date and u.birthdate <= ^to_date)
+      from_date -> where(query, [u], u.birthdate >= ^from_date)
+      to_date -> where(query, [u], u.birthdate <= ^to_date)
+      true -> query
+    end
+  end
+
+  defp parse_date(nil), do: nil
+  defp parse_date(""), do: nil
+  defp parse_date(s) do
+    case Date.from_iso8601(s) do
+      {:ok, d} -> d
+      _ -> nil
+    end
+  end
+
+  defp apply_sort(query, %{"sort" => sort, "dir" => dir}) do
+    import Ecto.Query
+    dir = if dir in ["desc", "DESC"], do: :desc, else: :asc
+
+    allowed = %{
+      "first_name" => :first_name,
+      "last_name" => :last_name,
+      "birthdate" => :birthdate,
+      "gender" => :gender,
+      "inserted_at" => :inserted_at
+    }
+
+    case Map.get(allowed, sort) do
+      nil -> query
+      field_atom -> order_by(query, [u], [{^dir, field(u, ^field_atom)}])
+    end
+  end
+
+  defp apply_sort(query, _), do: query
 
   @doc """
   Gets a single user.
