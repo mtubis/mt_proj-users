@@ -17,6 +17,9 @@ services:
 
   phoenix:
     build: ./phoenix-api
+    working_dir: /app
+    volumes:
+      - ./phoenix-api:/app
     environment:
       DATABASE_URL: ecto://postgres:postgres@db/phoenix_app
       SECRET_KEY_BASE: dev_secret_key_base_change_me
