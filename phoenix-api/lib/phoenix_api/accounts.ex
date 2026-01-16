@@ -48,7 +48,7 @@ defmodule PhoenixApi.Accounts do
   defp maybe_gender(query, ""), do: query
   defp maybe_gender(query, gender) when gender in ["male", "female"] do
     import Ecto.Query
-    atom = String.to_atom(gender)   # tu jest bezpieczne, bo tylko 2 wartości
+    atom = String.to_atom(gender)
     where(query, [u], u.gender == ^atom)
   end
   defp maybe_gender(query, _), do: query
