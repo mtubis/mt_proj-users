@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Users</h1>
+
+    {% for label, messages in app.flashes %}
+        {% for msg in messages %}
+            <div class="flash {{ label }}">{{ msg }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    {{ form_start(filterForm) }}
+    {{ form_row(filterForm.first_name) }}
+    {{ form_row(filterForm.last_name) }}
+    {{ form_row(filterForm.gender) }}
+    {{ form_row(filterForm.birthdate_from) }}
+    {{ form_row(filterForm.birthdate_to) }}
+    <button type="submit">Filtruj</button>
+    <a href="{{ path('users_index') }}">Reset</a>
+    {{ form_end(filterForm) }}
+
+    <p><a href="{{ path('users_new') }}">+ New</a></p>
+
+    <table>
+        <thead>
+        <tr>
+            <th><a href="{{ path('users_index', app.request.query.all|merge({sort:'first_name', dir:(app.request.query.get('dir') == 'asc' ? 'desc' : 'asc')})) }}">First name</a></th>
+            <th><a href="{{ path('users_index', app.request.query.all|merge({sort:'last_name', dir:(app.request.query.get('dir') == 'asc' ? 'desc' : 'asc')})) }}">Last name</a></th>
+            <th><a href="{{ path('users_index', app.request.query.all|merge({sort:'birthdate', dir:(app.request.query.get('dir') == 'asc' ? 'desc' : 'asc')})) }}">Birthdate</a></th>
+            <th><a href="{{ path('users_index', app.request.query.all|merge({sort:'gender', dir:(app.request.query.get('dir') == 'asc' ? 'desc' : 'asc')})) }}">Gender</a></th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for u in users %}
+            <tr>
+                <td>{{ u.first_name }}</td>
+                <td>{{ u.last_name }}</td>
+                <td>{{ u.birthdate }}</td>
+                <td>{{ u.gender }}</td>
+                <td>
+                    <a href="{{ path('users_edit', {id: u.id}) }}">edit</a>
+                    <form method="post" action="{{ path('users_delete', {id: u.id}) }}" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('del_'~u.id) }}">
+                        <button type="submit" onclick="return confirm('Delete?')">delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

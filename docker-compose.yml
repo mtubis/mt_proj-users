@@ -36,8 +36,10 @@ services:
 
   symfony:
     build: ./symfony-app
+    volumes:
+      - ./symfony-app:/app
     environment:
-      PHOENIX_BASE_URL: http://phoenix:4000
+      PHOENIX_BASE_URL: http://phoenix:4000/api
     depends_on:
       - phoenix
     ports:

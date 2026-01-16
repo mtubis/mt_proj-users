@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>{{ mode == 'new' ? 'New user' : 'Edit user' }}</h1>
+
+    {{ form_start(form) }}
+    {{ form_widget(form) }}
+    <button type="submit">Save</button>
+    {{ form_end(form) }}
+
+    <p><a href="{{ path('users_index') }}">back</a></p>
+{% endblock %}

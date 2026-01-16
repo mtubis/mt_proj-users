@@ -7,6 +7,9 @@ defmodule PhoenixApi.Import.PeselImporter do
   @api_base "https://api.dane.gov.pl/1.4"
 
   def run!() do
+    alias PhoenixApi.Accounts.User
+    Repo.delete_all(User)
+
     firstnames_dataset_id = System.fetch_env!("PESEL_FIRSTNAMES_DATASET_ID")
     surnames_dataset_id = System.fetch_env!("PESEL_SURNAMES_DATASET_ID")
 
@@ -98,7 +101,7 @@ defmodule PhoenixApi.Import.PeselImporter do
     Logger.info("Using CSV: #{csv_url}")
 
     csv = fetch_text!(csv_url)
-    parse_top100_from_csv(csv)
+    parse_top100_from_csv(csv, :first_name)
   end
 
   defp top100_surnames!(dataset_id, gender) when gender in [:male, :female] do
@@ -127,7 +130,7 @@ defmodule PhoenixApi.Import.PeselImporter do
     Logger.info("Using CSV: #{csv_url}")
 
     csv = fetch_text!(csv_url)
-    parse_top100_from_csv(csv)
+    parse_top100_from_csv(csv, :last_name)
   end
 
   defp newest_by_modified(attrs_list) do
@@ -180,27 +183,68 @@ defmodule PhoenixApi.Import.PeselImporter do
   # CSV parsing + data generation
   # -------------------------
 
-  defp parse_top100_from_csv(csv) do
+  defp parse_top100_from_csv(csv, kind) when kind in [:first_name, :last_name] do
     lines = String.split(csv, ["\r\n", "\n"], trim: true)
+    if lines == [], do: []
 
-    # remove header
-    data_lines = Enum.drop(lines, 1)
+    header = hd(lines)
+    {sep, header_cols} = split_csv_line(header)
 
-    data_lines
-    |> Enum.map(&first_csv_col/1)
-    |> Enum.map(&String.trim/1)
-    |> Enum.map(&String.trim(&1, "\""))
+    idx =
+      case kind do
+        :first_name -> find_col_index(header_cols, ["imie", "imię"])
+        :last_name -> find_col_index(header_cols, ["nazwisko"])
+      end
+
+    # fallback: if no column with that name is found, take 1. (but this is rare)
+    idx = if is_nil(idx), do: 0, else: idx
+
+    lines
+    |> tl() # data without header
+    |> Enum.map(fn line ->
+      {_sep2, cols} = split_csv_line(line, sep)
+      cols |> Enum.at(idx, "") |> clean_cell()
+    end)
     |> Enum.reject(&(&1 == ""))
     |> Enum.take(100)
   end
 
-  defp first_csv_col(line) do
+  # automatically detect the separator based on the header
+  defp split_csv_line(line) do
     cond do
-      String.contains?(line, ";") -> line |> String.split(";", parts: 2) |> hd()
-      String.contains?(line, ",") -> line |> String.split(",", parts: 2) |> hd()
-      true -> line
+      String.contains?(line, ";") -> {";", String.split(line, ";")}
+      String.contains?(line, ",") -> {",", String.split(line, ",")}
+      true -> {";", [line]}
     end
+    |> then(fn {sep, cols} -> {sep, Enum.map(cols, &clean_header_cell/1)} end)
   end
+
+  # split for data – use separator from header
+  defp split_csv_line(line, sep) do
+    cols = String.split(line, sep)
+    {sep, cols}
+  end
+
+  defp clean_header_cell(cell) do
+    cell
+    |> String.trim()
+    |> String.trim("\"")
+  end
+
+  defp clean_cell(cell) do
+    cell
+    |> String.trim()
+    |> String.trim("\"")
+  end
+
+  defp find_col_index(cols, needles) do
+    cols
+    |> Enum.map(fn c -> String.downcase(c) end)
+    |> Enum.find_index(fn c ->
+      Enum.any?(needles, fn n -> String.contains?(c, n) end)
+    end)
+  end
+
 
   defp random_birthdate_iso() do
     from = ~D[1970-01-01]
