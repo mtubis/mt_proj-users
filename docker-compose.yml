@@ -22,11 +22,7 @@ services:
       SECRET_KEY_BASE: dev_secret_key_base_change_me
       PHX_HOST: localhost
       PORT: "4000"
-
-      # proste zabezpieczenie importu
       IMPORT_TOKEN: dev-import-token
-
-      # dataset IDs (stabilne) z dane.gov.pl
       PESEL_FIRSTNAMES_DATASET_ID: "1667"
       PESEL_SURNAMES_DATASET_ID: "1681"
     depends_on:
@@ -43,4 +39,3 @@ services:
       - phoenix
     ports:
       - "8000:8000"
-
