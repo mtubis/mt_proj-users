@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Api\PhoenixApiClientInterface;
-use App\Api\PhoenixApiClient;
 use App\Form\UserFilterType;
 use App\Form\UserType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,7 +22,6 @@ final class UserController extends AbstractController
         ]);
         $filterForm->handleRequest($req);
 
-        // $query = $req->query->all();
         $filters = $filterForm->getData() ?? [];
         $query = array_filter([
             'first_name' => $filters['first_name'] ?? null,
@@ -35,7 +33,7 @@ final class UserController extends AbstractController
             'birthdate_to' => isset($filters['birthdate_to']) && $filters['birthdate_to']
                 ? $filters['birthdate_to']->format('Y-m-d')
                 : null,
-            
+
             'sort' => $req->query->get('sort'),
             'dir' => $req->query->get('dir'),
         ], fn($v) => $v !== null && $v !== '');

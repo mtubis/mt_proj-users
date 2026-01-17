@@ -3,7 +3,6 @@
 namespace App\Tests\Controller;
 
 use App\Api\PhoenixApiClientInterface;
-use App\Api\PhoenixApiClient;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class UserControllerTest extends WebTestCase

@@ -2,7 +2,6 @@
 
 namespace App\Tests\Api;
 
-use App\Api\PhoenixApiClientInterface;
 use App\Api\PhoenixApiClient;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
