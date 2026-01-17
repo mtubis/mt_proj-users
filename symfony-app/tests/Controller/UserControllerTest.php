@@ -49,4 +49,35 @@ final class UserControllerTest extends WebTestCase
         $this->assertSelectorExists('.flash-error');
     }
 
+    public function testUsersIndexPassesFilterToApiClient(): void
+    {
+        $client = static::createClient();
+
+        $mockApi = $this->createMock(PhoenixApiClientInterface::class);
+
+        $mockApi
+            ->expects($this->once())
+            ->method('listUsers')
+            ->with($this->callback(function (array $query): bool {
+                return ($query['first_name'] ?? null) === 'Anna';
+            }))
+            ->willReturn([
+                'data' => [
+                    [
+                        'id' => 1,
+                        'first_name' => 'Anna',
+                        'last_name' => 'Nowak',
+                        'gender' => 'female',
+                        'birthdate' => '1995-05-05',
+                    ],
+                ],
+            ]);
+
+        static::getContainer()->set(PhoenixApiClientInterface::class, $mockApi);
+
+        $client->request('GET', '/users?first_name=Anna');
+
+        $this->assertResponseIsSuccessful();
+    }
+
 }
