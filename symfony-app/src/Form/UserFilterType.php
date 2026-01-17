@@ -7,6 +7,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class UserFilterType extends AbstractType
 {
@@ -31,5 +32,18 @@ final class UserFilterType extends AbstractType
                 'required' => false,
                 'widget' => 'single_text',
             ]);
+    }
+
+    public function getBlockPrefix(): string
+    {
+        return '';
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'method' => 'GET',
+            'csrf_protection' => false,
+        ]);
     }
 }

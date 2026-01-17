@@ -23,7 +23,22 @@ final class UserController extends AbstractController
         ]);
         $filterForm->handleRequest($req);
 
-        $query = $req->query->all();
+        // $query = $req->query->all();
+        $filters = $filterForm->getData() ?? [];
+        $query = array_filter([
+            'first_name' => $filters['first_name'] ?? null,
+            'last_name' => $filters['last_name'] ?? null,
+            'gender' => $filters['gender'] ?? null,
+            'birthdate_from' => isset($filters['birthdate_from']) && $filters['birthdate_from']
+                ? $filters['birthdate_from']->format('Y-m-d')
+                : null,
+            'birthdate_to' => isset($filters['birthdate_to']) && $filters['birthdate_to']
+                ? $filters['birthdate_to']->format('Y-m-d')
+                : null,
+            
+            'sort' => $req->query->get('sort'),
+            'dir' => $req->query->get('dir'),
+        ], fn($v) => $v !== null && $v !== '');
 
         try {
             $data = $api->listUsers($query);
